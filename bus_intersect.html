@@ -1,0 +1,72 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <title>Data Layer: Simple</title>
+    <meta name="viewport" content="initial-scale=1.0">
+    <meta charset="utf-8">
+    <style>
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      #map {
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <script>
+
+      var map;
+      function initMap() {
+        map = new google.maps.Map(document.getElementById('map'), {
+          zoom: 12,
+          center: {lat: 25.048241, lng: 121.543417}
+        });
+
+		var infowindow = new google.maps.InfoWindow({
+			content: ''
+		});
+		
+		var taipeiDistrictLayer = new google.maps.Data();
+		taipeiDistrictLayer.loadGeoJson('taipei_district.geojson');
+		taipeiDistrictLayer.setStyle({
+			fillOpacity: 0,
+			zIndex: 2,
+			clickable: false
+		});
+		taipeiDistrictLayer.setMap(map);
+		
+        // NOTE: This uses cross-domain XHR, and may not work on older browsers.
+        map.data.loadGeoJson('intersect200_merge.geojson');
+		map.data.setStyle({
+		  fillColor: 'green',
+		  strokeColor:'green'
+		});
+		map.data.addListener('mouseover', function(event) {
+		  map.data.revertStyle();
+		  map.data.overrideStyle(event.feature, {fillOpacity: 0.8});
+		});
+		map.data.addListener('mouseout', function(event) {
+		  map.data.revertStyle();
+		});
+		map.data.addListener('click', function(event) {
+		  infowindow.setContent('<div style="font-size:20px;line-height:1.35;overflow:hidden;white-space:nowrap;">' +
+		                         '行政區： '+ event.feature.getProperty("TNAME") +
+								 "<br/>行政區面積： " + (parseFloat(event.feature.getProperty("AREA"))/(1000*1000)).toFixed(2) + ' 平方公里' +
+								 "<br/>公車路線面積： " + (parseFloat(event.feature.getProperty("its_area"))/(1000*1000)).toFixed(2) + ' 平方公里' +
+								 "<br/>公車路線覆蓋比率： " + (parseFloat(event.feature.getProperty("its_olap"))*100).toFixed(2) + " %" +
+								 "</div>");
+		  var anchor = new google.maps.MVCObject();
+		  anchor.set("position", event.latLng);
+		  infowindow.open(map, anchor);
+		});
+      }
+    </script>
+    <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDVDDhAeB7B4KG27I9UDJvgeH5NVa6Tw2w&signed_in=true&callback=initMap">
+    </script>
+  </body>
+</html>
